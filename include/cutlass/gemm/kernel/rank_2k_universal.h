@@ -141,6 +141,7 @@ public:
     typename LayoutC::Stride::Index ldd{0};
 
     bool allow_early_exit{false};
+    bool antisymmetric {false};
 
     //
     // Methods
@@ -166,7 +167,8 @@ public:
       typename LayoutB::Stride::Index ldb,
       typename LayoutC::Stride::Index ldc,
       typename LayoutC::Stride::Index ldd,
-      bool allow_early_exit = false
+      bool allow_early_exit = false,
+      bool antisymmetric = false
     ):
       mode(mode), 
       problem_size(problem_size), 
@@ -176,9 +178,8 @@ public:
       batch_stride_A(batch_stride_A), batch_stride_B(0),
       batch_stride_C(batch_stride_C), batch_stride_D(batch_stride_D), 
       lda(lda), ldb(ldb), ldc(ldc), ldd(ldd),
-      allow_early_exit(allow_early_exit) {
-
-      }
+      allow_early_exit(allow_early_exit),
+      antisymmetric(antisymmetric) { }
 
       /// Returns arguments for a the transposed problem
       Arguments transposed_problem() const {
@@ -234,6 +235,7 @@ public:
     int *semaphore = nullptr;
 
     bool allow_early_exit {false};
+    bool antisymmetric {false};
 
     //
     // Methods
@@ -270,8 +272,8 @@ public:
       batch_stride_C(args.batch_stride_C),
       batch_stride_D(args.batch_stride_D),
       semaphore(static_cast<int *>(workspace)),
-      allow_early_exit(args.allow_early_exit) {
-    }
+      allow_early_exit(args.allow_early_exit),
+      antisymmetric(args.antisymmetric) { }
 
     CUTLASS_HOST_DEVICE
     void update(
@@ -601,6 +603,13 @@ public:
       __syncthreads();
 
       accumulators.clear();
+    }
+
+    if (params.antisymmetric) {
+      CUTLASS_PRAGMA_UNROLL
+      for (int ielm = 0; ielm < Mma1::FragmentC::kElements; ++ielm) {
+        accumulators[ielm] = -accumulators[ielm];
+      }
     }
 
     // Compute threadblock-scoped matrix multiply-add (B x AT)
