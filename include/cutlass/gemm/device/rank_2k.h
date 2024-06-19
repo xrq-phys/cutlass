@@ -257,13 +257,13 @@ public:
         }
       }
     }
-    else {
+    /* else {
 
       if (args.batch_count > 1) {
         return Status::kErrorInvalidProblem;
       }
-    }
-    
+    } */
+
     int gemm_k_size = args.problem_size.k();
 
     // Initialize the Params structure

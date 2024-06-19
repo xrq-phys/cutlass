@@ -175,7 +175,7 @@ public:
       batch_count(batch_count),
       epilogue(epilogue), 
       ptr_A(ptr_A), ptr_B(ptr_B), ptr_C(ptr_C), ptr_D(ptr_D), 
-      batch_stride_A(batch_stride_A), batch_stride_B(0),
+      batch_stride_A(batch_stride_A), batch_stride_B(batch_stride_B),
       batch_stride_C(batch_stride_C), batch_stride_D(batch_stride_D), 
       lda(lda), ldb(ldb), ldc(ldc), ldd(ldd),
       allow_early_exit(allow_early_exit),
@@ -379,6 +379,11 @@ public:
 
     ElementA *ptr_A = static_cast<ElementA *>(params.ptr_A); 
     ElementB *ptr_B = static_cast<ElementB *>(params.ptr_B);
+
+    if (params.mode == GemmUniversalMode::kBatched) {
+      ptr_A += threadblock_tile_offset.k() * params.batch_stride_A;
+      ptr_B += threadblock_tile_offset.k() * params.batch_stride_B;
+    }
 
     //
     // Fetch pointers based on mode.
